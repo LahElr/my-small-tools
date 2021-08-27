@@ -23,3 +23,7 @@ For detail, see the help documention built inside the script by `argparse`
 ## SBU Crawler
 
 This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Describing Images Using 1 Million Captioned Photographs](http://www.cs.virginia.edu/~vicente/sbucaptions/) with proxy.
+
+## Hardware Sentry
+
+This script can watch some specs of cpu or gpu and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported.
