@@ -26,4 +26,10 @@ This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Descr
 
 ## Hardware Sentry
 
-This script can watch some specs of cpu or gpu and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported.
+This script can watch some specs of CPU or GPU and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported.
+
+For now, it only support Windows or Linux machines. Only Nvidia GPUs are supported. Multiple GPU is supported, but multiple CPU is not. MacOS devices are not supported as I don't have such one.
+
+Need cuda, pynvml and psutil.
+
+While using this script, please note to make sure to redirect output of commands in the shell script. For Linux/Windows, use `command &> log` to get all outputs.
