@@ -210,7 +210,7 @@ class execute:
 parser = argparse.ArgumentParser(
     prog="hardware sentry",
     description=
-    "This script can watch utility of cpu or gpu and execute a powershell or bash script when it's higher or lower than a set value. For operations used to bound specs, higher/gt,lower/lt,geq,leq are supported."
+    "This script can watch some specs of cpu or gpu and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported."
 )
 parser.add_argument(
     "--cpu",
