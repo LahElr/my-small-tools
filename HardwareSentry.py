@@ -33,7 +33,7 @@ def get_gpu_status():
         handle = pynvml.nvmlDeviceGetHandleByIndex(i)
         mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
         util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-        gpu_status_list.append((mem.free, mem.total, util.gpu))
+        gpu_status_list.append((mem.free, mem.total, util.gpu/100))
     pynvml.nvmlShutdown()
     return gpu_status_list
 
@@ -111,11 +111,11 @@ request_map = {
 
 def check_gpu_boundaries(bound_util, bound_gmem, gpu_status, gpu_bound_same):
     util_check_list = []
-    util_least = 0
+    util_least = 1
     util_most = 99999
     util_request_num_list = []
     gmem_check_list = []
-    gmem_least = 0
+    gmem_least = 1
     gmem_most = 99999
     gmem_request_num_list = []
 
