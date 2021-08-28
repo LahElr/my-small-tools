@@ -8,6 +8,9 @@ import os
 import sys
 import warnings
 
+def debug_log(*args,**kargs):
+    print(*args,**kargs)
+    pass
 
 def parse_args_to_boundaries(args):
     boundaries = {}
@@ -16,7 +19,10 @@ def parse_args_to_boundaries(args):
         if args.get(x, None) is not None:
             boundaries[x] = {}
             for i in range(0, args[x].__len__(), 2):
-                boundaries[x][args[x][i]] = float(args[x][i + 1])
+                if args[x][i] == "part":
+                    boundaries[x][args[x][i]] = args[x][i + 1]
+                else:
+                    boundaries[x][args[x][i]] = float(args[x][i + 1])
     return boundaries
 
 
@@ -48,7 +54,7 @@ def get_spec():
     # psutil.disk_io_counters()  # .read_count  .write_count
     gpu_status = get_gpu_status()
     ret = (cpu_util, mem_util, gpu_status)
-    print(ret)
+    debug_log(ret)
     return ret
 
 
@@ -98,7 +104,8 @@ request_map = {
     "geq": lambda x, y: x >= y,
     "leq": lambda x, y: x <= y,
     "least": lambda x, y: True,
-    "most": lambda x, y: True
+    "most": lambda x, y: True,
+    "part": lambda x, y: True
 }
 
 
@@ -106,9 +113,11 @@ def check_gpu_boundaries(bound_util, bound_gmem, gpu_status, gpu_bound_same):
     util_check_list = []
     util_least = 0
     util_most = 99999
+    util_request_num_list = []
     gmem_check_list = []
     gmem_least = 0
     gmem_most = 99999
+    gmem_request_num_list = []
 
     for gpu_i, gpu in enumerate(gpu_status):
         gpu_checked = True
@@ -118,6 +127,8 @@ def check_gpu_boundaries(bound_util, bound_gmem, gpu_status, gpu_bound_same):
                 util_least = value
             if request == "most" and value < util_most:
                 util_most = value
+            if request == "part":
+                util_request_num_list = map(int,value.split(","))
         if gpu_checked:
             util_check_list.append(gpu_i)
 
@@ -135,6 +146,8 @@ def check_gpu_boundaries(bound_util, bound_gmem, gpu_status, gpu_bound_same):
                 gmem_least = value
             if request == "most" and value < gmem_most:
                 gmem_most = value
+            if request == "part":
+                gmem_request_num_list = map(int,value.split(","))
         if gpu_checked:
             gmem_check_list.append(gpu_i)
 
@@ -147,6 +160,14 @@ def check_gpu_boundaries(bound_util, bound_gmem, gpu_status, gpu_bound_same):
         gpu_least = max(util_least, gmem_least)
         gpu_max = min(util_most, gmem_most)
         if not (gpu_least <= len(gpu_list) <= gpu_max):
+            return False
+
+    for no in util_request_num_list:
+        if no not in util_check_list:
+            return False
+
+    for no in gmem_request_num_list:
+        if no not in gmem_check_list:
             return False
 
     return True
@@ -193,7 +214,7 @@ class execute:
                 .format(self.platform))
 
     def __call__(self, timer):
-        # print(" --lahelr: script sees.")
+        debug_log(" --lahelr: script sees.")
         self.counter += 1
         if self.args.max != -1 and self.counter > self.args.max:
             warnings.warn("The limit of max watch times is triggered.")
@@ -228,7 +249,7 @@ parser.add_argument(
     dest="gpu",
     nargs="+",
     help=
-    "The gpu utility boundary. Use this param like this: \"--gpu higher 0.75 least 3\", which means you need at least 3 GPUs to have a utility over 0.75."
+    "The gpu utility boundary. Use this param like this: \"--gpu higher 0.75 least 3 part 0,1\", which means you need at least 3 GPUs including CPU No.0 and 1 to have a utility over 0.75."
 )
 parser.add_argument(
     "--mem",
