@@ -12,15 +12,15 @@
 
 This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
+この 作品 は <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">クリエイティブ・コモンズ 表示 - 非営利 - 継承 4.0 国際 ライセンス</a>の下に提供されています。
+
 ---
 
 ## DirMerger
 
 This script can merge 2 directions in the way you want.
 
-Need python 3, all packages used are python standard libraries.
-
-For detail, see the help documention built inside the script by `argparse`
+For detail, see the help messages built inside the script by `argparse`
 
 ## Hardware Sentry
 
