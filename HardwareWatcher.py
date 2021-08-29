@@ -108,7 +108,7 @@ def output_specs(report_num, specs):
         content += "| ├-GPU Memory: {} bytes used, {} bytes free, {} bytes total, util {:.2f}%.\n".format(
             gpu[1].used, gpu[1].free, gpu[1].total,
             (gpu[1].used / gpu[1].total * 100))
-        content += "| ├-GPU Utilization: {}%.\n".format(gpu[2].gpu)
+        content += "| └-GPU Utilization: {}%.\n".format(gpu[2].gpu)
     content += "-" * 7
     content += "\n\n"
     flushing_content(report_num, content)
