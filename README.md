@@ -22,10 +22,6 @@ Need python 3, all packages used are python standard libraries.
 
 For detail, see the help documention built inside the script by `argparse`
 
-## SBU Crawler
-
-This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Describing Images Using 1 Million Captioned Photographs](http://www.cs.virginia.edu/~vicente/sbucaptions/) with proxy.
-
 ## Hardware Sentry
 
 This script can watch some specs of CPU or GPU and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported.
@@ -35,3 +31,17 @@ For now, it only support Windows or Linux machines. Only Nvidia GPUs are support
 Need cuda, pynvml and psutil.
 
 While using this script, please note to make sure to redirect output of commands in the shell script. For Linux/Windows, use `command &> log` to get all outputs.
+
+## Hardware Watcher
+
+This script can report some hardware performance data routinely, kinda like a very simple mix of htop and nvidia-smi.
+
+Need cuda, pynvml and psutil.
+
+This script reuses some of the code from [Hardware Sentry](https://github.com/LahElr/my-small-tools#hardware-sentry) [here](https://github.com/LahElr/my-small-tools/blob/main/HardwareSentry.py).
+
+Tested on Windows and Linux machines. It should also work on other OSs, but no test is done.
+
+## SBU Crawler
+
+This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Describing Images Using 1 Million Captioned Photographs](http://www.cs.virginia.edu/~vicente/sbucaptions/) with proxy.
