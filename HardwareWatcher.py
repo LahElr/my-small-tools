@@ -2,7 +2,7 @@ import psutil
 import argparse
 import pynvml
 # import GPUtil
-from threading import Thread, Timer
+# from threading import Thread, Timer
 import datetime
 import os
 import sys
