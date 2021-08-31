@@ -42,7 +42,7 @@ This script reuses some of the code from [Hardware Sentry](https://github.com/La
 
 Tested on Windows and Linux machines. It should also work on other OSs, but no test is done.
 
-* Known problem(s) : The console widow should be wide enough or the refreshing can't work proply; Unable to use Ctrl-C to stop on Windows for unknown reason.
+* Known problem(s) : The refreshing can't work proply if line is warped on displaying;
 
 ## SBU Crawler
 
