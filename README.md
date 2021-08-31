@@ -42,6 +42,8 @@ This script reuses some of the code from [Hardware Sentry](https://github.com/La
 
 Tested on Windows and Linux machines. It should also work on other OSs, but no test is done.
 
+* Known problem(s) : The console widow should be wide enough or the refreshing can't work proply; Unable to use Ctrl-C to stop on Windows for unknown reason.
+
 ## SBU Crawler
 
 This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Describing Images Using 1 Million Captioned Photographs](http://www.cs.virginia.edu/~vicente/sbucaptions/) with proxy.
