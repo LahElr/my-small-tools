@@ -31,6 +31,7 @@ class RepeatingTimer(Timer):
     '''
     This class executes a function every specified time intervals
     '''
+
     def run(self):
         while not self.finished.is_set():
             self.function(self, *self.args, **self.kwargs)
@@ -87,6 +88,7 @@ def output_specs(report_num, specs):
     content = "-" * 7
     content += "\n"
     content += "Time : {}\n".format(datetime.datetime.now())
+
     content += "CPU util: {}%.\n".format(specs[0])
     content += "Virtual Memory: {}/{} bytes used, {}/{} bytes free, util {}%.\n".format(
         specs[1][0].used, specs[1][0].total, specs[1][0].free,
@@ -94,21 +96,31 @@ def output_specs(report_num, specs):
     content += "Swap Memory: {}/{} bytes used, {}/{} bytes free, util {}%.\n".format(
         specs[1][1].used, specs[1][1].total, specs[1][1].free,
         specs[1][1].total, specs[1][1].percent)
+
     content += "Disk: {} used, {} free, {} total, util {}%.\n".format(
         specs[2].used, specs[2].free, specs[2].total, specs[2].percent)
     content += "Disk IO: read {}, write {}, r/w ratio {:.2f}.\n".format(
         specs[3].read_count, specs[3].write_count,
         (specs[3].read_count / specs[3].write_count))
-    content += "Net IO: {} packets sent, {} packets recv, errin{}, errout{}.\n".format(
+    content += "Dist IO time: read {}, write {}, r/w ratio {:.2f}.\n".format(
+        specs[3].read_time, specs[3].write_time, (specs[3].read_time/specs[3].write_time))
+    content += "Net IO: {} packets sent, {} packets recv, errin {}, errout {}.\n".format(
         specs[4].packets_sent, specs[4].packets_recv, specs[4].errin,
         specs[4].errout)
+
     content += "GPU status:\n"
-    for gpu_no, gpu in enumerate(specs[5]):
+    for gpu_no, gpu in enumerate(specs[5][:-1]):
         content += "├-GPU No.{} : {}:\n".format(gpu_no, gpu[0].decode())
         content += "| ├-GPU Memory: {} bytes used, {} bytes free, {} bytes total, util {:.2f}%.\n".format(
-            gpu[1].used, gpu[1].free, gpu[1].total,
-            (gpu[1].used / gpu[1].total * 100))
+            gpu[1].used, gpu[1].free, gpu[1].total, (gpu[1].used / gpu[1].total * 100))
         content += "| └-GPU Utilization: {}%.\n".format(gpu[2].gpu)
+    gpu_no = len(specs[5]) - 1
+    gpu = specs[5][-1]
+    content += "└-GPU No.{} : {}:\n".format(gpu_no, gpu[0].decode())
+    content += "  ├-GPU Memory: {} bytes used, {} bytes free, {} bytes total, util {:.2f}%.\n".format(
+        gpu[1].used, gpu[1].free, gpu[1].total, (gpu[1].used / gpu[1].total * 100))
+    content += "  └-GPU Utilization: {}%.\n".format(gpu[2].gpu)
+
     content += "-" * 7
     content += "\n\n"
     flushing_content(report_num, content)
@@ -133,8 +145,7 @@ class execute:
 
 parser = argparse.ArgumentParser(
     prog="hardware watcher",
-    description=
-    "This script can watch some specs of cpu or gpu and report them.")
+    description="This script can watch some specs of cpu or gpu and report them.")
 parser.add_argument(
     "--step",
     type=float,
@@ -144,8 +155,7 @@ parser.add_argument(
     "--max",
     type=int,
     default=1e4,
-    help=
-    "The max check rounds you want. Set -1 if you want it to keep checking forever."
+    help="The max check rounds you want. Set -1 if you want it to keep checking forever."
 )
 args = parser.parse_args()
 
@@ -153,5 +163,8 @@ if args.step < 0.1:
     raise RuntimeError(
         "The time step is too short, please set it to over 0.1 sec.")
 
-t = RepeatingTimer(1.0, execute(args))  # set the repeating timer
-t.start()  # start watching
+try:
+    t = RepeatingTimer(1.0, execute(args))  # set the repeating timer
+    t.start()  # start watching
+except KeyboardInterrupt:
+    pass
