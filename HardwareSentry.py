@@ -2,11 +2,12 @@ import psutil
 import argparse
 import pynvml
 # import GPUtil
-from threading import Thread, Timer
+# from threading import Thread, Timer
 import datetime
 import os
 import sys
 import warnings
+import time
 
 def debug_log(*args,**kargs):
     print(*args,**kargs)
@@ -38,14 +39,28 @@ def get_gpu_status():
     return gpu_status_list
 
 
-class RepeatingTimer(Timer):
+class RepeatingTimer:
     '''
     This class executes a function every specified time intervals
     '''
+    def __init__(self,interval,function):
+        self.interval = interval
+        self.function = function
+        self.finished = False
+
+    def finish(self):
+        self.finished = True
+
     def run(self):
-        while not self.finished.is_set():
-            self.function(self, *self.args, **self.kwargs)
-            self.finished.wait(self.interval)
+        while not self.finished:
+            try:
+                self.function(self)
+                time.sleep(self.interval)
+            except KeyboardInterrupt:
+                debug_log("catch KeyboardInterrupt at run.")
+                self.finish()
+                break
+
 
 
 def get_spec():
@@ -218,12 +233,12 @@ class execute:
         self.counter += 1
         if self.args.max != -1 and self.counter > self.args.max:
             warnings.warn("The limit of max watch times is triggered.")
-            timer.finished.set()
+            timer.finish()
         specs = get_spec()
         if check_boundaries(self.boundaries, specs, args.gpu_bound_same):
             execute_script(self.platform, self.script_name, self.args.sh,
                            args.output)
-            timer.finished.set()
+            timer.finish()
 
 
 # lahelr: under this line is the area for main()
@@ -310,4 +325,4 @@ if args.step < 0.1:
         "The time step is too short, please set it to over 0.1 sec.")
 
 t = RepeatingTimer(1.0, execute(args))  # set the repeating timer
-t.start()  # start watching
+t.run()  # start watching
