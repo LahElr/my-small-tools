@@ -1,6 +1,5 @@
 import psutil
 import argparse
-import pynvml
 # import GPUtil
 # from threading import Thread, Timer
 import datetime
@@ -8,6 +7,27 @@ import os
 import sys
 import warnings
 import time
+import shutil
+
+# In case you don't have any nvidia GPUs
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    pynvml.nvmlShutdown()
+except OSError:
+
+    class pynvml:
+        @classmethod
+        def nvmlInit(x):
+            pass
+
+        @classmethod
+        def nvmlShutdown(x):
+            pass
+
+        @classmethod
+        def nvmlDeviceGetCount(x):
+            return 0
 
 
 def debug_log(*args, **kargs):
@@ -32,7 +52,7 @@ class RepeatingTimer:
     '''
     This class executes a function every specified time intervals
     '''
-    def __init__(self,interval,function):
+    def __init__(self, interval, function):
         self.interval = interval
         self.function = function
         self.finished = False
@@ -64,8 +84,39 @@ def get_spec():
     return ret
 
 
-def flushing_content(i: int, content: str):
+def warp_line(line: str, col: int):
+    ret = []
+    while True:
+        if len(line) <= col:
+            ret.append(line)
+            break
+        else:
+            space_positions = [i for i in range(len(line)) if line[i] == " "]
+            split_index = 0
+            for space_position in space_positions:
+                if space_position > split_index:
+                    if space_position <= col:
+                        split_index = space_position
+                    else:
+                        break
+            if split_index == 0:
+                split_index = col
+            ret.append(line[:split_index])
+            line = line[split_index:]
+    return ret
+
+
+def warp_lines(content: str):
     lines = content.splitlines()
+    col, row = shutil.get_terminal_size()
+    ret = []
+    for i, line in enumerate(lines):
+        ret.extend(warp_line(line, col))
+    return ret
+
+
+def flushing_content(i: int, content: str):
+    lines = warp_lines(content)
     line_count = len(lines)
     if i > 0:
         for _ in range(line_count - 1):
@@ -116,7 +167,8 @@ def output_specs(report_num, specs):
         specs[3].read_count, specs[3].write_count,
         (specs[3].read_count / specs[3].write_count))
     content += "Dist IO time: read {}, write {}, r/w ratio {:.2f}.\n".format(
-        specs[3].read_time, specs[3].write_time, (specs[3].read_time/specs[3].write_time))
+        specs[3].read_time, specs[3].write_time,
+        (specs[3].read_time / specs[3].write_time))
     content += "Net IO: {} packets sent, {} packets recv, errin {}, errout {}.\n".format(
         specs[4].packets_sent, specs[4].packets_recv, specs[4].errin,
         specs[4].errout)
@@ -125,13 +177,15 @@ def output_specs(report_num, specs):
     for gpu_no, gpu in enumerate(specs[5][:-1]):
         content += "├-GPU No.{} : {}:\n".format(gpu_no, gpu[0].decode())
         content += "| ├-GPU Memory: {} bytes used, {} bytes free, {} bytes total, util {:.2f}%.\n".format(
-            gpu[1].used, gpu[1].free, gpu[1].total, (gpu[1].used / gpu[1].total * 100))
+            gpu[1].used, gpu[1].free, gpu[1].total,
+            (gpu[1].used / gpu[1].total * 100))
         content += "| └-GPU Utilization: {}%.\n".format(gpu[2].gpu)
     gpu_no = len(specs[5]) - 1
     gpu = specs[5][-1]
     content += "└-GPU No.{} : {}:\n".format(gpu_no, gpu[0].decode())
     content += "  ├-GPU Memory: {} bytes used, {} bytes free, {} bytes total, util {:.2f}%.\n".format(
-        gpu[1].used, gpu[1].free, gpu[1].total, (gpu[1].used / gpu[1].total * 100))
+        gpu[1].used, gpu[1].free, gpu[1].total,
+        (gpu[1].used / gpu[1].total * 100))
     content += "  └-GPU Utilization: {}%.\n".format(gpu[2].gpu)
 
     content += "-" * 7
@@ -163,7 +217,8 @@ class execute:
 
 parser = argparse.ArgumentParser(
     prog="hardware watcher",
-    description="This script can watch some specs of cpu or gpu and report them.")
+    description=
+    "This script can watch some specs of cpu or gpu and report them.")
 parser.add_argument(
     "--step",
     type=float,
@@ -173,7 +228,8 @@ parser.add_argument(
     "--max",
     type=int,
     default=1e4,
-    help="The max check rounds you want. Set -1 if you want it to keep checking forever."
+    help=
+    "The max check rounds you want. Set -1 if you want it to keep checking forever."
 )
 args = parser.parse_args()
 
