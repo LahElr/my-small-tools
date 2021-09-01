@@ -36,13 +36,11 @@ While using this script, please note to make sure to redirect output of commands
 
 This script can report some hardware performance data routinely, kinda like a very simple mix of htop and nvidia-smi.
 
-Need cuda, pynvml and psutil.
+Need psutil. Need cuda and pynvml to see GPU informations. For GPU information, only Nvidia GPUs are supported.
 
 This script reuses some of the code from [Hardware Sentry](https://github.com/LahElr/my-small-tools#hardware-sentry) [here](https://github.com/LahElr/my-small-tools/blob/main/HardwareSentry.py).
 
 Tested on Windows and Linux machines. It should also work on other OSs, but no test is done.
-
-* Known problem(s) : The refreshing can't work proply if line is warped on displaying;
 
 ## SBU Crawler
 
