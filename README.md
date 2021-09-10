@@ -40,7 +40,7 @@ Need psutil. Need cuda and pynvml to see GPU informations. For GPU information, 
 
 This script reuses some of the code from [Hardware Sentry](https://github.com/LahElr/my-small-tools#hardware-sentry) [here](https://github.com/LahElr/my-small-tools/blob/main/HardwareSentry.py).
 
-Tested on Windows and Linux machines. It should also work on other OSs, but no test is done.
+Tested on Windows and Linux machines. It should also work on other OSs, but no test is done. Functions about temperature are only avaliable on Linux.
 
 ## SBU Crawler
 
