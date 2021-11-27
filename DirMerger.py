@@ -2,8 +2,8 @@ import argparse
 import os
 import shutil
 
-# python .\DirMerger.py test\dest -s=test\src -a=0
-# python .\DirMerger.py test\dest -s=test\src -a=15
+# python .\DirMerger.py -t=test\dest -s=test\src -a=0
+# python .\DirMerger.py -t=test\dest -s=test\src -a=15
 
 
 def file_name_with_sub_struct(root_path: str, parent: str,
@@ -71,9 +71,11 @@ if __name__ == "__main__":
                         default=".",
                         help="the source direction",
                         type=str)
-    parser.add_argument("destination",
+    parser.add_argument("-t",
+                        "--destination",
                         help="the destination direction",
-                        type=str)
+                        type=str,
+                        required=True)
     parser.add_argument(
         "-a",
         "--action",
@@ -88,12 +90,12 @@ if __name__ == "__main__":
         help=
         "bool, keep the src file not moved or copied if a file with same name exists in destination",
         default=True,
-        type=bool)
+        action="store_true")
     parser.add_argument("-d",
                         "--detailed",
                         help="bool, whether you want to see detailed info",
                         default=True,
-                        type=bool)
+                        action="store_true")
     args = parser.parse_args()
 
     # print("\n".join(
