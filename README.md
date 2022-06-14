@@ -20,15 +20,15 @@ This work is licensed under a <a rel="license" href="http://creativecommons.org/
 
 This script can merge 2 directions in the way you want.
 
-For detail, see the help messages built inside the script by `argparse`
+For detail, see the help messages built inside the script.
 
 ## Hardware Sentry
 
 This script can watch some specs of CPU or GPU and execute a shell script when they reach set bounds. For operations used to bound specs, higher/gt,lower/lt,geq and leq are supported, for specify gpu number, least and most are supported.
 
-For now, it only support Windows or Linux machines. Only Nvidia GPUs are supported. Multiple GPU is supported, but multiple CPU is not. MacOS devices are not supported as I don't have such one.
+For now, it only support Windows or Linux machines. Only Nvidia GPUs are supported. Multiple GPU is supported, but multiple CPU is not. MacOS devices are not supported.
 
-Need cuda, pynvml and psutil.
+Requires cuda, pynvml and psutil.
 
 While using this script, please note to make sure to redirect output of commands in the shell script. For Linux/Windows, use `command &> log` to get all outputs.
 
@@ -36,7 +36,7 @@ While using this script, please note to make sure to redirect output of commands
 
 This script can report some hardware performance data routinely, kinda like a very simple mix of htop and nvidia-smi.
 
-Need psutil. Need cuda and pynvml to see GPU informations. For GPU information, only Nvidia GPUs are supported.
+Requires psutil. Requires cuda and pynvml to see GPU informations. For GPU information, only Nvidia GPUs are supported.
 
 This script reuses some of the code from [Hardware Sentry](https://github.com/LahElr/my-small-tools#hardware-sentry) [here](https://github.com/LahElr/my-small-tools/blob/main/HardwareSentry.py).
 
