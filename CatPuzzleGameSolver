@@ -1,0 +1,68 @@
+import numpy
+
+
+def input_matrix(name="matrix"):
+    map_size = list(
+        map(int, input(f"The size of {name}? answer in `height width` format:").split()))
+    matrix = numpy.zeros(map_size, dtype=numpy.byte)
+    print(f"Now input the {name}, 0 for empty block, 1 for filled block.")
+    for line in range(map_size[0]):
+        matrix[line] = list(map(int, input(f"The no.{line} line:").split()))
+    return matrix
+
+
+def input_cats():
+    cat_count = int(input("How many cats are avaliable?"))
+    cats = []
+    for cat_no in range(cat_count):
+        cats.append(input_matrix("cat"))
+    return cats
+
+
+def can_put_cat(gmap, cat, position):
+    if not (gmap.shape[0] >= cat.shape[0]+position[0] and gmap.shape[1] >= cat.shape[1]+position[1]):
+        return False
+    return not ((gmap[position[0]:position[0]+cat.shape[0], position[1]:position[1]+cat.shape[1]]+cat) >= 2).any()
+
+
+def put_cat(gmap, cat, position):
+    gmap[position[0]:position[0]+cat.shape[0],
+         position[1]:position[1]+cat.shape[1]] += cat
+
+def rotate(matrix, direction):
+    return numpy.rot90(matrix,direction)
+
+
+def solve_rec(gmap, cats):
+    if len(cats) == 0:
+        return []
+    for x in range(gmap.shape[0]):
+        for y in range(gmap.shape[1]):
+            for direction in range(4):
+                cat = rotate(cats[0],direction)
+                if can_put_cat(gmap, cat, [x, y]):
+                    gmap_bk = gmap.copy()
+                    put_cat(gmap, cat, [x, y])
+                    solution = solve_rec(gmap, cats[1:])
+                    if solution is None:
+                        gmap = gmap_bk
+                        continue
+                    else:
+                        solution.append([x, y, direction])
+                        return solution
+                else:
+                    continue
+    return None
+
+
+def solve(gmap, cats):
+    assert numpy.sum(gmap) + sum([numpy.sum(cat) for cat in cats]) == gmap.shape[0] * gmap.shape[1]
+    solution = solve_rec(gmap, cats)
+    solution.reverse()
+    return solution
+
+
+if __name__ == "__main__":
+    gmap = input_matrix("map")
+    cats = input_cats()
+    print(solve(gmap, cats))
