@@ -45,3 +45,7 @@ Tested on Windows and Linux machines. It should also work on other OSs, but no t
 ## SBU Crawler
 
 This script can crawl images of dataset SBU dataset mentioned in [Im2Text: Describing Images Using 1 Million Captioned Photographs](http://www.cs.virginia.edu/~vicente/sbucaptions/) with proxy.
+
+## CatPuzzleGameSolver
+
+This script solves the game Cat Organized Neatly, a result of me stuck at one stage for over 30 minutes.
