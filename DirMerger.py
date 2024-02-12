@@ -76,10 +76,10 @@ def compare_files(file_path_0: str, file_path_1: str) -> Boolean:
     '''
     file_hash = ['', '']
     with open(file_path_0, 'rb') as file_0:
-        hash_0 = hashlib.sha1(file_0.read())
+        hash_0 = hashlib.md5(file_0.read())
         file_hash[0] = hash_0.hexdigest()
     with open(file_path_1, 'rb') as file_1:
-        hash_1 = hashlib.sha1(file_1.read())
+        hash_1 = hashlib.md5(file_1.read())
         file_hash[1] = hash_1.hexdigest()
     return file_hash[0] == file_hash[1]
 
@@ -145,10 +145,20 @@ def main(args, statistics=None):
                 pass
             nn = ""
             if filename in lsd:
+                # 获取两个文件的大小
+                size_a = os.stat(os.path.join(dest_sub_dir, filename)).st_size
+                size_b = os.stat(os.path.join(parent, filename)).st_size
+                if args.size is not None:
+                    # 如果大小相等且够大
+                    if size_a == size_b and size_a // 1073741824 >= args.size:
+                        print("{} is omitted duo to a large file of same size in destination.".format(os.path.join(parent, filename)))
+                        statistics[1] += 1
+                        continue
                 # -k -c 共有六种可能性：√×和√同 直接跳过；√异和×异 重命名并迁移；××和×同：直接迁移
                 # 之前-k未指定的话，会更名迁移相同文件，现在不会了
-                compare_result = 0 if not args.compare else 1 if compare_files(
-                    os.path.join(dest_sub_dir, filename), os.path.join(parent, filename)) else 2
+                # 必须先大小一致，才有可能是相同的文件
+                compare_result = 0 if not args.compare else 1 if (size_a == size_b and compare_files(
+                    os.path.join(dest_sub_dir, filename), os.path.join(parent, filename))) else 2
                 if args.keep and compare_result == 0:
                     # 跳过
                     print("{} is omitted duo to a same-name-file in destination.".format(
@@ -164,7 +174,6 @@ def main(args, statistics=None):
                 elif compare_result == 2:
                     # 重命名再迁移
                     lss = os.listdir(parent)
-                    # TODO
                     i = decide_i_for_same_names(filename, lss, lsd)
                     nn = "src{}_{}".format(i, filename)
                     # rename the src file for uniformity
@@ -243,6 +252,10 @@ if __name__ == "__main__":
                         help="bool, whether you want to see detailed info",
                         default=True,
                         action="store_true")
+    parser.add_argument("--size",
+                        help="int, file pairs of the same size larger than this value (in GB) would be considered same without comparing content",
+                        type=int,
+                        default=None)
     args = parser.parse_args()
 
     statistics = [0, 0, 0]  # moved, omitted, overwritten
@@ -259,6 +272,8 @@ if __name__ == "__main__":
     print("action:{},{},{},{}".format(keep_src_file, keep_src_dir,
                                       keep_dest_file, keep_dest_dir))
     print("keep:{}, detailed:{}.".format(args.keep, args.detailed))
+    if args.size is not None:
+        print("size limitation:{}GB.".format(args.size))
 
     print("are you sure to continue? your", end="")
 
