@@ -1,26 +1,20 @@
 import argparse
 import os
 import shutil
-from xmlrpc.client import Boolean
 import hashlib
-
-# python .\DirMerger.py -t=test\dest -s=test\src -a=0
-# python .\DirMerger.py -t=test\dest -s=test\src -a=15
+import zlib
 
 
-def file_name_with_sub_struct(root_path: str, parent: str,
-                              filename: str) -> str:
-    '''
+def file_name_with_sub_struct(root_path: str, parent: str, filename: str) -> str:
+    """
     This function gives a name shows the position of a file in the file tree.
     eg.: `file_name_with_sub_struct("a","a\\b\\c","d")` -> `'b_c_d'`
-    '''
-    return os.path.join(parent.split(root_path)[1],
-                        filename).replace("\\", "_")[1:]
+    """
+    return os.path.join(parent.split(root_path)[1], filename).replace("\\", "_")[1:]
 
 
 def rec_delete_files(path: str) -> None:
-    '''This function recursively deletes all files in the specified directory, but would not delete directories
-    '''
+    """This function recursively deletes all files in the specified directory, but would not delete directories"""
     cur_path = os.path.dirname(path) if os.path.isfile(path) else path
     cur_path = os.path.abspath(cur_path)
     for parent, dirnames, filenames in os.walk(cur_path):
@@ -30,8 +24,7 @@ def rec_delete_files(path: str) -> None:
 
 
 def delete_dirs(path: str) -> None:
-    '''This function deletes every directory in the specified directory, but would not delete files in the root directory
-    '''
+    """This function deletes every directory in the specified directory, but would not delete files in the root directory"""
     cur_path = os.path.dirname(path) if os.path.isfile(path) else path
     cur_path = os.path.abspath(cur_path)
     for node in os.listdir(cur_path):
@@ -42,10 +35,8 @@ def delete_dirs(path: str) -> None:
 
 
 def rec_move_files_to_root(root_path: str) -> None:
-    '''This function can recursively move every file under the specified path to the root directory 
-    '''
-    cur_path = os.path.dirname(root_path) if os.path.isfile(
-        root_path) else root_path
+    """This function can recursively move every file under the specified path to the root directory"""
+    cur_path = os.path.dirname(root_path) if os.path.isfile(root_path) else root_path
     cur_path = os.path.abspath(cur_path)
     for parent, dirnames, filenames in os.walk(cur_path):
         # for dirname in dirnames
@@ -53,45 +44,61 @@ def rec_move_files_to_root(root_path: str) -> None:
             print("moving file: {}".format(os.path.join(parent, filename)))
             new_name = file_name_with_sub_struct(root_path, parent, filename)
             # print(new_name)
-            os.rename(os.path.join(parent, filename),
-                      os.path.join(parent, new_name))
+            os.rename(os.path.join(parent, filename), os.path.join(parent, new_name))
             shutil.move(os.path.join(parent, new_name), root_path)
 
 
 def delete_under_dir(root_path: str) -> None:
-    '''
+    """
     This function deletes everything in the specified directory
-    '''
-    cur_path = os.path.dirname(root_path) if os.path.isfile(
-        root_path) else root_path
+    """
+    cur_path = os.path.dirname(root_path) if os.path.isfile(root_path) else root_path
     cur_path = os.path.abspath(cur_path)
     for node in os.listdir(cur_path):
         print("deleting {}".format(os.path.join(cur_path, node)))
         shutil.rmtree(os.path.join(cur_path, node))
 
 
-def compare_files(file_path_0: str, file_path_1: str) -> Boolean:
-    '''
-    This function can calculate sha1 shechsum of two files and compare them, if the same, return `True`
-    '''
-    file_hash = ['', '']
-    with open(file_path_0, 'rb') as file_0:
-        hash_0 = hashlib.md5(file_0.read())
-        file_hash[0] = hash_0.hexdigest()
-    with open(file_path_1, 'rb') as file_1:
-        hash_1 = hashlib.md5(file_1.read())
-        file_hash[1] = hash_1.hexdigest()
-    return file_hash[0] == file_hash[1]
+def compare_crc32(file_path_0: str, file_path_1: str) -> bool:
+    with open(file_path_0, "rb") as file_0:
+        hash_0 = zlib.crc32(file_0.read())
+    with open(file_path_1, "rb") as file_1:
+        hash_1 = zlib.crc32(file_1.read())
+    return hash_0 == hash_1
+
+
+def compare_md5(file_path_0: str, file_path_1: str) -> bool:
+    with open(file_path_0, "rb") as file_0:
+        hash_0 = hashlib.md5(file_0.read()).hexdigest()
+    with open(file_path_1, "rb") as file_1:
+        hash_1 = hashlib.md5(file_1.read()).hexdigest()
+    return hash_0 == hash_1
+
+
+def compare_files(file_path_0: str, file_path_1: str, compare_mode: int = 0) -> bool:
+    """
+    This function can calculate MD5 hash of two files and compare them, if the same, return `True`
+    Use a cascadation of crc32 and md5 algorithm.
+    Use crc32 only when `compare_mode` is 1; use md5 only when `compare_mode` is 2.
+    """
+
+    if compare_mode == 1:
+        return compare_crc32(file_path_0, file_path_1)
+    elif compare_mode == 2:
+        return compare_md5(file_path_0, file_path_1)
+    else:
+        return compare_crc32(file_path_0, file_path_1) and compare_md5(
+            file_path_0, file_path_1
+        )
 
 
 def decide_i_for_same_names(filename: str, lss: list, lsd: list):
-    '''
+    """
     This function find a proper number to be in the prefix of the new name if a renaming is needed when detecting same-name/same file in src and dst
-    '''
+    """
     for i in range(65536):
         if i >= 65535:
-            raise RuntimeError(
-                "too many iters of a same-name-file.")
+            raise RuntimeError("too many iters of a same-name-file.")
         nn = "src{}_{}".format(i, filename)
         if nn not in lss and nn not in lsd:
             return i
@@ -117,27 +124,31 @@ def main(args, statistics=None):
         delete_under_dir(args.destination)
 
     # start mov/cp
-    src_full_path = os.path.dirname(args.src) if os.path.isfile(
-        args.src) else args.src
+    src_full_path = os.path.dirname(args.src) if os.path.isfile(args.src) else args.src
     src_full_path = os.path.abspath(src_full_path)
 
-    dest_full_path = os.path.dirname(args.destination) if os.path.isfile(
-        args.destination) else args.destination
+    dest_full_path = (
+        os.path.dirname(args.destination)
+        if os.path.isfile(args.destination)
+        else args.destination
+    )
     dest_full_path = os.path.abspath(dest_full_path)
 
     for parent, dirnames, filenames in os.walk(src_full_path):
         # print("looping in {},{},{}".format(parent, dirnames, filenames))
         for dirname in dirnames:
             # print("looping in {} under {}.".format(dirname, parent))
-            dest_sub_dir = os.path.join(dest_full_path,
-                                        parent.split(src_full_path)[1][1:])
+            dest_sub_dir = os.path.join(
+                dest_full_path, parent.split(src_full_path)[1][1:]
+            )
             if not os.path.exists(dest_sub_dir):
                 os.makedirs(dest_sub_dir)
 
         for filename in filenames:
             # print("looping in {} under {}.".format(filename, parent))
-            dest_sub_dir = os.path.join(dest_full_path,
-                                        parent.split(src_full_path)[1][1:])
+            dest_sub_dir = os.path.join(
+                dest_full_path, parent.split(src_full_path)[1][1:]
+            )
             lsd = []
             try:
                 lsd = os.listdir(dest_sub_dir)
@@ -150,25 +161,52 @@ def main(args, statistics=None):
                 size_b = os.stat(os.path.join(parent, filename)).st_size
                 if args.size is not None:
                     # 如果大小相等且够大
-                    if size_a == size_b and size_a // 1073741824 >= args.size:
-                        print("{} is omitted duo to a large file of same size in destination.".format(os.path.join(parent, filename)))
+                    if size_a == size_b and size_a / 1073741824 >= args.size:
+                        if args.detailed:
+                            print(
+                                "{} is omitted duo to a large file of same size in destination.".format(
+                                    os.path.join(parent, filename)
+                                )
+                            )
                         statistics[1] += 1
                         continue
                 # -k -c 共有六种可能性：√×和√同 直接跳过；√异和×异 重命名并迁移；××和×同：直接迁移
                 # 之前-k未指定的话，会更名迁移相同文件，现在不会了
                 # 必须先大小一致，才有可能是相同的文件
-                compare_result = 0 if not args.compare else 1 if (size_a == size_b and compare_files(
-                    os.path.join(dest_sub_dir, filename), os.path.join(parent, filename))) else 2
+                compare_result = (
+                    0
+                    if not args.compare
+                    else (
+                        1
+                        if (
+                            size_a == size_b
+                            and compare_files(
+                                os.path.join(dest_sub_dir, filename),
+                                os.path.join(parent, filename),
+                                compare_mode=args.compare_mode,
+                            )
+                        )
+                        else 2
+                    )
+                )
                 if args.keep and compare_result == 0:
                     # 跳过
-                    print("{} is omitted duo to a same-name-file in destination.".format(
-                        os.path.join(parent, filename)))
+                    if args.detailed:
+                        print(
+                            "{} is omitted duo to a same-name-file in destination.".format(
+                                os.path.join(parent, filename)
+                            )
+                        )
                     statistics[1] += 1
                     continue
                 elif args.keep and compare_result == 1:
                     # 跳过
-                    print("{} is omitted duo to a same file in destination.".format(
-                        os.path.join(parent, filename)))
+                    if args.detailed:
+                        print(
+                            "{} is omitted duo to a same file in destination.".format(
+                                os.path.join(parent, filename)
+                            )
+                        )
                     statistics[1] += 1
                     continue
                 elif compare_result == 2:
@@ -177,8 +215,7 @@ def main(args, statistics=None):
                     i = decide_i_for_same_names(filename, lss, lsd)
                     nn = "src{}_{}".format(i, filename)
                     # rename the src file for uniformity
-                    os.rename(os.path.join(parent, filename),
-                              os.path.join(parent, nn))
+                    os.rename(os.path.join(parent, filename), os.path.join(parent, nn))
                 elif not args.keep and compare_result in [0, 1]:
                     # 直接迁移
                     nn = filename
@@ -191,9 +228,11 @@ def main(args, statistics=None):
 
             if keep_src_file:
                 if args.detailed:
-                    print("coping file {} to {}".format(
-                        os.path.join(parent, nn),
-                        os.path.join(dest_sub_dir, nn)))
+                    print(
+                        "coping file {} to {}".format(
+                            os.path.join(parent, nn), os.path.join(dest_sub_dir, nn)
+                        )
+                    )
                 shutil.copy(os.path.join(parent, nn), dest_sub_dir)
                 statistics[0] += 1
                 # shutil.copy(os.path.join(parent,nn),os.path.join(dest_sub_dir,nn))
@@ -201,14 +240,20 @@ def main(args, statistics=None):
                 try:
                     shutil.move(os.path.join(parent, nn), dest_sub_dir)
                     if args.detailed:
-                        print("moved file {} to {}".format(
-                            os.path.join(parent, nn), dest_sub_dir))
+                        print(
+                            "moved file {} to {}".format(
+                                os.path.join(parent, nn), dest_sub_dir
+                            )
+                        )
                     statistics[0] += 1
                 except:
                     os.remove(os.path.join(parent, nn))
                     if args.detailed:
-                        print("overwritten file {} to {}".format(
-                            os.path.join(parent, nn), dest_sub_dir))
+                        print(
+                            "overwritten file {} to {}".format(
+                                os.path.join(parent, nn), dest_sub_dir
+                            )
+                        )
                     statistics[2] += 1
 
     if not keep_src_dir:
@@ -218,44 +263,52 @@ def main(args, statistics=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s",
-                        "--src",
-                        default=".",
-                        help="the source direction",
-                        type=str)
-    parser.add_argument("-t",
-                        "--destination",
-                        help="the destination direction",
-                        type=str,
-                        required=True)
+    parser.add_argument(
+        "-s", "--src", default=".", help="the source direction", type=str
+    )
+    parser.add_argument(
+        "-t", "--destination", help="the destination direction", type=str, required=True
+    )
     parser.add_argument(
         "-a",
         "--action",
         help="how to merge, consist of 4 bits, specifies whether you want to :keep the src files, keep the src dir-struct, keep the dest files, keep the dest dir-struct.",
         type=int,
         default=15,
-        choices=range(16))
+        choices=range(16),
+    )
     parser.add_argument(
         "-k",
         "--keep",
         help="bool, keep the src file not moved or copied if a file with same name exists in destination, if -c specified, keep the same file",
         default=True,
-        action="store_true")
+        action="store_true",
+    )
     parser.add_argument(
         "-c",
         "--compare",
         help="bool, if a file with same name exists in destination, compare the src and dst files, if not same, mark and move/copy",
         default=True,
-        action="store_true")
-    parser.add_argument("-d",
-                        "--detailed",
-                        help="bool, whether you want to see detailed info",
-                        default=True,
-                        action="store_true")
-    parser.add_argument("--size",
-                        help="int, file pairs of the same size larger than this value (in GB) would be considered same without comparing content",
-                        type=int,
-                        default=None)
+        action="store_true",
+    )
+    parser.add_argument(
+        "-d",
+        "--detailed",
+        help="bool, whether you want to see detailed info",
+        default=True,
+        action="store_true",
+    )
+    parser.add_argument(
+        "--compare_mode",
+        help="int, 0: use crc32 before md5 to double check; 1: use crc32 only; 2: use md5 only; default is 0, but 1 with `-k` is more recommanded when there are many files to be omitted.",
+        default=0,
+    )
+    parser.add_argument(
+        "--size",
+        help="float, file pairs of the same size larger than this value (in GB) would be considered same without comparing content",
+        type=float,
+        default=None,
+    )
     args = parser.parse_args()
 
     statistics = [0, 0, 0]  # moved, omitted, overwritten
@@ -269,8 +322,11 @@ if __name__ == "__main__":
     keep_dest_dir = args.action & 1 != 0
     print("src:{}".format(args.src))
     print("dest:{}".format(args.destination))
-    print("action:{},{},{},{}".format(keep_src_file, keep_src_dir,
-                                      keep_dest_file, keep_dest_dir))
+    print(
+        "action:{},{},{},{}".format(
+            keep_src_file, keep_src_dir, keep_dest_file, keep_dest_dir
+        )
+    )
     print("keep:{}, detailed:{}.".format(args.keep, args.detailed))
     if args.size is not None:
         print("size limitation:{}GB.".format(args.size))
@@ -281,10 +337,10 @@ if __name__ == "__main__":
         print(" nothing", end="")
     else:
         for i in {
-                8: "source files",
-                4: "source direction structure",
-                2: "original files in destination path",
-                1: "original direction structure in destination path"
+            8: "source files",
+            4: "source direction structure",
+            2: "original files in destination path",
+            1: "original direction structure in destination path",
         }.items():
             if args.action & i[0] == 0:
                 print(" {},".format(i[1]), end="")
@@ -295,5 +351,8 @@ if __name__ == "__main__":
 
     main(args, statistics)
 
-    print("Processing finished, {} files moved/copied, {} files omitted, {} files overwritten.".format(
-        statistics[0], statistics[1], statistics[2]))
+    print(
+        "Processing finished, {} files moved/copied, {} files omitted, {} files overwritten.".format(
+            statistics[0], statistics[1], statistics[2]
+        )
+    )
